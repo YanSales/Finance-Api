@@ -2,7 +2,7 @@ root = true
 
 [*]
 charset = utf-8
-end_of_line = crlf
+end_of_line = lf
 insert_final_newline = true
 indent_style = space
 indent_size = 4
@@ -16,3 +16,18 @@ csharp_style_namespace_declarations = file_scoped:suggestion
 csharp_style_var_for_built_in_types = false:suggestion
 csharp_style_var_when_type_is_apparent = true:suggestion
 csharp_style_var_elsewhere = false:suggestion
+
+# Severidades explicitas de analyzers (o build usa TreatWarningsAsErrors).
+# CA1812: tipos internos instanciados apenas via DI/reflexao (handlers, health checks).
+dotnet_diagnostic.CA1812.severity = none
+# CA2007: ASP.NET Core nao possui SynchronizationContext.
+dotnet_diagnostic.CA2007.severity = none
+# CA1515: controllers e classes de teste (xUnit) precisam ser publicos.
+dotnet_diagnostic.CA1515.severity = none
+
+[tests/**/*.cs]
+# Metodos de teste xUnit sao de instancia por convencao.
+dotnet_diagnostic.CA1822.severity = none
+
+[**/Migrations/*.cs]
+generated_code = true

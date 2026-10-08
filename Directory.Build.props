@@ -1,4 +1,9 @@
 <Project>
+  <!--
+    Politica de warnings: TreatWarningsAsErrors fica ligado em todos os projetos.
+    XML docs (CS1591) sao exigidos apenas onde ha superficie publica documentavel:
+    Api (OpenAPI) e Contracts. Ver docs/decisions/0002-foundation-decisions.md.
+  -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
@@ -6,7 +11,6 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AnalysisLevel>latest-recommended</AnalysisLevel>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Deterministic>true</Deterministic>
     <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
   </PropertyGroup>

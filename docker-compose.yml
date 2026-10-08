@@ -1,3 +1,5 @@
+# Requer um arquivo .env (copie de .env.example). Variaveis obrigatorias ausentes
+# interrompem o `docker compose up` com uma mensagem clara.
 services:
   api:
     build:
@@ -8,8 +10,10 @@ services:
       - "8080:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=FinanceDb;User Id=sa;Password=$${SA_PASSWORD};TrustServerCertificate=True;Encrypt=False"
-      Jwt__Secret: "$${JWT_SECRET}"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=FinanceDb;User Id=sa;Password=${SA_PASSWORD:?Defina SA_PASSWORD no arquivo .env};TrustServerCertificate=True;Encrypt=False"
+      Jwt__Secret: "${JWT_SECRET:?Defina JWT_SECRET no arquivo .env}"
+      # Somente neste ambiente local: aplica as migrations ao iniciar.
+      Database__MigrateOnStartup: "true"
     depends_on:
       sqlserver:
         condition: service_healthy
@@ -19,17 +23,19 @@ services:
     container_name: finance-sqlserver
     environment:
       ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: "$${SA_PASSWORD}"
+      MSSQL_SA_PASSWORD: "${SA_PASSWORD:?Defina SA_PASSWORD no arquivo .env}"
       MSSQL_PID: Developer
     ports:
       - "1433:1433"
     volumes:
       - sqlserver-data:/var/opt/mssql
     healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$${SA_PASSWORD}\" -C -Q \"SELECT 1\" || exit 1"]
+      # $$ evita a interpolacao do Compose: a variavel e resolvida pelo shell do container.
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q \"SELECT 1\" || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 20
+      start_period: 20s
 
 volumes:
   sqlserver-data:
