@@ -1,0 +1,12 @@
+.git
+.github
+.vs
+.idea
+bin
+obj
+tests
+docs
+.gitignore
+.dockerignore
+*.user
+*.suo

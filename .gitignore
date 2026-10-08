@@ -1,0 +1,15 @@
+bin/
+obj/
+.vs/
+.idea/
+TestResults/
+coverage/
+*.user
+*.suo
+
+# Secrets
+.env
+appsettings.*.local.json
+
+# Docker
+docker-data/
