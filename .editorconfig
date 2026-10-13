@@ -28,6 +28,8 @@ dotnet_diagnostic.CA1515.severity = none
 [tests/**/*.cs]
 # Metodos de teste xUnit sao de instancia por convencao.
 dotnet_diagnostic.CA1822.severity = none
+# ASP0000: testes constroem ServiceProvider isolado de proposito.
+dotnet_diagnostic.ASP0000.severity = none
 
 [**/Migrations/*.cs]
 generated_code = true
