@@ -1,6 +1,14 @@
 @Api_HostAddress = http://localhost:5127
 
-GET {{Api_HostAddress}}/weatherforecast/
-Accept: application/json
+### Liveness: processo vivo (nao depende do banco)
+GET {{Api_HostAddress}}/health/live
 
-###
+### Readiness: dependencias criticas (SQL Server). 503 se indisponivel
+GET {{Api_HostAddress}}/health/ready
+
+### Todos os health checks
+GET {{Api_HostAddress}}/health
+
+### Documento OpenAPI (somente Development)
+GET {{Api_HostAddress}}/openapi/v1.json
+Accept: application/json
