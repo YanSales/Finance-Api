@@ -7,7 +7,7 @@ using Shouldly;
 
 namespace Infrastructure.Tests;
 
-[Collection(SqlServerCollection.Name)]
+[Collection(SqlServerTestGroup.Name)]
 public sealed class DatabaseTests(SqlServerFixture sqlServer)
 {
     private const string UnreachableConnectionString =

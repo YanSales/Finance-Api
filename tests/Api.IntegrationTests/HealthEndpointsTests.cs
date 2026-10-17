@@ -42,7 +42,7 @@ public sealed class HealthEndpointsTests
     }
 }
 
-[Collection(SqlServerCollection.Name)]
+[Collection(SqlServerTestGroup.Name)]
 public sealed class HealthEndpointsWithDatabaseTests(SqlServerFixture sqlServer)
 {
     [Fact]

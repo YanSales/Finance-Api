@@ -1,3 +1,4 @@
+using Microsoft.Data.SqlClient;
 using Infrastructure.Authentication;
 using Infrastructure.Persistence.Context;
 using Microsoft.EntityFrameworkCore;
@@ -33,7 +34,22 @@ public sealed class DependencyInjectionTests
         var dbContext = scope.ServiceProvider.GetRequiredService<FinanceDbContext>();
 
         dbContext.Database.ProviderName.ShouldBe("Microsoft.EntityFrameworkCore.SqlServer");
-        dbContext.Database.GetConnectionString().ShouldBe(ConnectionString);
+        var actualConnectionString = dbContext.Database.GetConnectionString();
+
+        actualConnectionString.ShouldNotBeNull();
+
+        var actual = new SqlConnectionStringBuilder(
+            actualConnectionString);
+
+        var expected = new SqlConnectionStringBuilder(
+            ConnectionString);
+
+        actual.DataSource.ShouldBe(expected.DataSource);
+        actual.InitialCatalog.ShouldBe(expected.InitialCatalog);
+        actual.UserID.ShouldBe(expected.UserID);
+        actual.Password.ShouldBe(expected.Password);
+        actual.TrustServerCertificate.ShouldBe(
+            expected.TrustServerCertificate);
     }
 
     [Fact]

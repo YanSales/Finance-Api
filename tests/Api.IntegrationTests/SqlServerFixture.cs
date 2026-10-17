@@ -6,7 +6,9 @@ namespace Api.IntegrationTests;
 public sealed class SqlServerFixture : IAsyncLifetime
 {
     private readonly MsSqlContainer container =
-        new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest").Build();
+        new MsSqlBuilder()
+            .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
+            .Build();
 
     public string ConnectionString => container.GetConnectionString();
 
@@ -15,8 +17,8 @@ public sealed class SqlServerFixture : IAsyncLifetime
     public Task DisposeAsync() => container.DisposeAsync().AsTask();
 }
 
-[CollectionDefinition(Name)]
-public sealed class SqlServerCollection : ICollectionFixture<SqlServerFixture>
+[CollectionDefinition(SqlServerTestGroup.Name)]
+public sealed class SqlServerTestGroup : ICollectionFixture<SqlServerFixture>
 {
     public const string Name = "SqlServer";
 }
