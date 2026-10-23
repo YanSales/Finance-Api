@@ -13,6 +13,7 @@ builder.Host.UseSerilog((context, services, configuration) => configuration
 
 builder.Services.AddControllers();
 builder.Services.AddApiFoundation();
+builder.Services.AddJwtAuthentication();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -32,12 +33,17 @@ app.UseStatusCodePages();
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.MapOpenApi().AllowAnonymous();
 }
 
+// Autenticacao antes da autorizacao: o ClaimsPrincipal precisa existir quando as politicas forem avaliadas.
+// Seguro por padrao: todo endpoint de controller exige usuario autenticado (RequireAuthorization em MapControllers);
+// os publicos declaram [AllowAnonymous]. Nao se usa FallbackPolicy porque ela tambem barra requisicoes sem
+// endpoint correspondente (rota inexistente retornaria 401 em vez de 404).
+app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllers();
+app.MapControllers().RequireAuthorization();
 app.MapHealthEndpoints();
 
 await app.ApplyMigrationsIfConfiguredAsync();

@@ -1,3 +1,4 @@
+using Application.Behaviors;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -14,7 +15,11 @@ public static class DependencyInjection
 
         var assembly = typeof(DependencyInjection).Assembly;
 
-        services.AddMediatR(configuration => configuration.RegisterServicesFromAssembly(assembly));
+        services.AddMediatR(configuration =>
+        {
+            configuration.RegisterServicesFromAssembly(assembly);
+            configuration.AddOpenBehavior(typeof(ValidationBehavior<,>));
+        });
         services.AddValidatorsFromAssembly(assembly, includeInternalTypes: true);
 
         return services;

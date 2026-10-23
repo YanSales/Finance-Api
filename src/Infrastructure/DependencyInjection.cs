@@ -1,10 +1,14 @@
+using Application.Abstractions.Authentication;
+using Application.Abstractions.Persistence;
 using Infrastructure.Authentication;
 using Infrastructure.Health;
 using Infrastructure.Persistence.Context;
+using Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 
 namespace Infrastructure;
 
@@ -27,6 +31,11 @@ public static class DependencyInjection
             .Bind(configuration.GetSection(JwtOptions.SectionName))
             .ValidateDataAnnotations()
             .ValidateOnStart();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IValidateOptions<JwtOptions>, JwtOptionsValidator>());
+
+        services.AddSingleton<IPasswordHasher, IdentityPasswordHasher>();
+        services.AddSingleton<IAccessTokenService, JwtAccessTokenService>();
+        services.AddScoped<IUserRepository, UserRepository>();
 
         services.AddDbContext<FinanceDbContext>(options =>
             options.UseSqlServer(GetConnectionString(configuration)));
