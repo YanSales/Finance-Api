@@ -1,3 +1,5 @@
+using Application.Abstractions.Authentication;
+using Application.Abstractions.Persistence;
 using Microsoft.Data.SqlClient;
 using Infrastructure.Authentication;
 using Infrastructure.Persistence.Context;
@@ -108,5 +110,39 @@ public sealed class DependencyInjectionTests
         {
             _ = options.Value;
         });
+    }
+
+    [Fact]
+    public void JwtOptionsWithTheExamplePlaceholderSecretAreRejected()
+    {
+        using var provider = BuildProvider(new()
+        {
+            ["Jwt:Issuer"] = "issuer",
+            ["Jwt:Audience"] = "audience",
+            ["Jwt:Secret"] = "CHANGE_ME_TO_A_LONG_RANDOM_SECRET_AT_LEAST_32_CHARACTERS",
+        });
+        var options = provider.GetRequiredService<IOptions<JwtOptions>>();
+
+        Should.Throw<OptionsValidationException>(() =>
+        {
+            _ = options.Value;
+        });
+    }
+
+    [Fact]
+    public void AuthenticationServicesAreRegistered()
+    {
+        using var provider = BuildProvider(new()
+        {
+            ["ConnectionStrings:DefaultConnection"] = ConnectionString,
+            ["Jwt:Issuer"] = "issuer",
+            ["Jwt:Audience"] = "audience",
+            ["Jwt:Secret"] = new string('s', 48),
+        });
+        using var scope = provider.CreateScope();
+
+        scope.ServiceProvider.GetRequiredService<IUserRepository>().ShouldNotBeNull();
+        scope.ServiceProvider.GetRequiredService<IPasswordHasher>().ShouldNotBeNull();
+        scope.ServiceProvider.GetRequiredService<IAccessTokenService>().ShouldNotBeNull();
     }
 }
