@@ -1,3 +1,4 @@
+using System.Globalization;
 using Infrastructure.Health;
 using Infrastructure.Persistence.Context;
 using Microsoft.Data.SqlClient;
@@ -27,8 +28,31 @@ public sealed class DatabaseTests(SqlServerFixture sqlServer)
 
         await dbContext.Database.MigrateAsync();
 
-        (await dbContext.Database.GetAppliedMigrationsAsync()).ShouldContain(migration => migration.EndsWith("_InitialCreate", StringComparison.Ordinal));
+        var applied = (await dbContext.Database.GetAppliedMigrationsAsync()).ToList();
+        applied.ShouldContain(migration => migration.EndsWith("_InitialCreate", StringComparison.Ordinal));
+        applied.ShouldContain(migration => migration.EndsWith("_AddUsers", StringComparison.Ordinal));
         (await dbContext.Database.GetPendingMigrationsAsync()).ShouldBeEmpty();
+
+        await dbContext.Database.EnsureDeletedAsync();
+    }
+
+    [Fact]
+    public async Task UsersTableEnforcesUniqueEmailsInTheDatabase()
+    {
+        var connectionString = new SqlConnectionStringBuilder(sqlServer.ConnectionString)
+        {
+            InitialCatalog = $"FinanceTests_{Guid.NewGuid():N}",
+        }.ConnectionString;
+        await using var dbContext = CreateContext(connectionString);
+        await dbContext.Database.MigrateAsync();
+
+        await using var connection = new SqlConnection(connectionString);
+        await connection.OpenAsync();
+        await using var command = new SqlCommand(
+            "SELECT COUNT(*) FROM sys.indexes WHERE name = 'UX_Users_Email' AND is_unique = 1 AND object_id = OBJECT_ID('dbo.Users')",
+            connection);
+
+        Convert.ToInt32(await command.ExecuteScalarAsync(), CultureInfo.InvariantCulture).ShouldBe(1);
 
         await dbContext.Database.EnsureDeletedAsync();
     }

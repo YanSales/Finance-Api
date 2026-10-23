@@ -1,3 +1,4 @@
+using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Persistence.Context;
@@ -8,6 +9,8 @@ namespace Infrastructure.Persistence.Context;
 /// </summary>
 public sealed class FinanceDbContext(DbContextOptions<FinanceDbContext> options) : DbContext(options)
 {
+    public DbSet<User> Users => Set<User>();
+
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
         ArgumentNullException.ThrowIfNull(configurationBuilder);
