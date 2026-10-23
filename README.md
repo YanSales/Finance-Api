@@ -4,8 +4,8 @@ API REST financeira (pessoal e, futuramente, empresarial) construída em .NET co
 consistência financeira, rastreabilidade e evolução incremental. O contexto completo do projeto está em
 [`FINANCE_API_CONTEXT_MASTER.md`](FINANCE_API_CONTEXT_MASTER.md).
 
-> **Status: Fase 1 (Foundation).** Não há funcionalidades de negócio ainda: nem autenticação, nem contas,
-> nem transações. Existe a base técnica (DI, erros, health checks, OpenAPI, persistência, CI).
+> **Status: Fase 2 (Authentication).** Cadastro, login e autorização com JWT Bearer. Ainda não há contas
+> nem transações financeiras. A base técnica (DI, erros, health checks, OpenAPI, persistência, CI) vem da Fase 1.
 
 ## Stack
 
@@ -29,7 +29,7 @@ database/            Stored Procedures e scripts auxiliares (o schema vem das mi
 docs/decisions/      ADRs
 ```
 
-Decisões da fundação: [ADR 0002](docs/decisions/0002-foundation-decisions.md).
+Decisões da fundação: [ADR 0002](docs/decisions/0002-foundation-decisions.md). Autenticação: [ADR 0003](docs/decisions/0003-authentication.md).
 
 ## Pré-requisitos
 
@@ -53,7 +53,15 @@ dotnet user-secrets set "Jwt:Secret" "<segredo com pelo menos 32 caracteres>"
 ```
 
 Variáveis equivalentes: `ConnectionStrings__DefaultConnection`, `Jwt__Secret`. A API falha na inicialização
-se o `Jwt:Secret` for inválido (mínimo de 32 caracteres) ou se a connection string estiver ausente.
+se o `Jwt:Secret` for inválido (mínimo de 32 caracteres, ou o placeholder `CHANGE_ME...` do `.env.example`) ou se
+a connection string estiver ausente. Gere um segredo único, por exemplo: `openssl rand -base64 48`.
+
+| Configuração              | Obrigatória | Padrão (`appsettings.json`) | Observação                                   |
+|---------------------------|-------------|-----------------------------|----------------------------------------------|
+| `Jwt:Secret`              | sim         | —                           | Nunca versionar. ≥ 32 caracteres.            |
+| `Jwt:Issuer`              | sim         | `finance-api`               |                                              |
+| `Jwt:Audience`            | sim         | `finance-api-clients`       |                                              |
+| `Jwt:AccessTokenMinutes`  | não         | `15`                        | 1 a 60.                                      |
 
 ## Executar com Docker
 
@@ -81,7 +89,31 @@ dotnet test Finance.Api.slnx
 
 Testes de Infrastructure e Api usam SQL Server real via Testcontainers, então o **Docker precisa estar em execução**.
 
+## Autenticação
+
+Fluxo: `POST /api/v1/auth/register` → `POST /api/v1/auth/login` (retorna o JWT) → enviar
+`Authorization: Bearer <accessToken>` nos endpoints protegidos. O access token expira em
+`Jwt:AccessTokenMinutes` (15 por padrão). Senhas: 12 a 128 caracteres, armazenadas somente como hash
+(PBKDF2-HMAC-SHA512). Todo endpoint de controller exige autenticação por padrão; os públicos são marcados com `[AllowAnonymous]`.
+
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/register -H 'Content-Type: application/json' \
+  -d '{"email":"ana@example.com","password":"CorrectHorse-Battery-2026"}'
+curl -X POST http://localhost:8080/api/v1/auth/login -H 'Content-Type: application/json' \
+  -d '{"email":"ana@example.com","password":"CorrectHorse-Battery-2026"}'
+curl http://localhost:8080/api/v1/users/me -H "Authorization: Bearer $TOKEN"
+```
+
+**Fora do escopo desta fase:** refresh tokens, recuperação de senha, confirmação de e-mail, MFA, revogação de
+tokens, rate limiting e bloqueio por tentativas (ver [ADR 0003](docs/decisions/0003-authentication.md)).
+
 ## Endpoints disponíveis
+
+| Endpoint                         | Auth    | Descrição                                                    |
+|----------------------------------|---------|--------------------------------------------------------------|
+| `POST /api/v1/auth/register`     | pública | Cadastra usuário (`201`, `400`, `409`).                      |
+| `POST /api/v1/auth/login`        | pública | Emite o JWT (`200`) ou `401` genérico para qualquer falha.   |
+| `GET /api/v1/users/me`           | Bearer  | Dados do usuário autenticado (`401` sem/ com token inválido).|
 
 | Endpoint            | Descrição                                                                 |
 |---------------------|---------------------------------------------------------------------------|
@@ -95,7 +127,9 @@ Exemplos de chamadas em [`src/Api/Api.http`](src/Api/Api.http).
 
 ## Banco de dados
 
-Migrations do EF Core em `src/Infrastructure/Persistence/Migrations`. Comandos e convenções em
+Migrations do EF Core em `src/Infrastructure/Persistence/Migrations` (`InitialCreate`, `AddUsers`). Para aplicar
+localmente: `docker compose up -d sqlserver && dotnet ef database update -p src/Infrastructure -s src/Api`
+(com `ConnectionStrings__DefaultConnection` configurada). Com Docker Compose elas são aplicadas na inicialização. Comandos e convenções em
 [`database/README.md`](database/README.md).
 
 ## Estratégia de desenvolvimento

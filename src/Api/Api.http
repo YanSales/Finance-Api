@@ -12,3 +12,20 @@ GET {{Api_HostAddress}}/health
 ### Documento OpenAPI (somente Development)
 GET {{Api_HostAddress}}/openapi/v1.json
 Accept: application/json
+
+### Cadastro de usuario (publico)
+POST {{Api_HostAddress}}/api/v1/auth/register
+Content-Type: application/json
+
+{ "email": "ana@example.com", "password": "CorrectHorse-Battery-2026" }
+
+### Login (publico). Copie o accessToken retornado para a variavel abaixo
+POST {{Api_HostAddress}}/api/v1/auth/login
+Content-Type: application/json
+
+{ "email": "ana@example.com", "password": "CorrectHorse-Battery-2026" }
+
+### Usuario autenticado (requer Bearer). 401 sem token
+@token = <cole o accessToken aqui>
+GET {{Api_HostAddress}}/api/v1/users/me
+Authorization: Bearer {{token}}
